@@ -1,0 +1,11 @@
+mock/
+**/dist/
+**/node_modules/
+bun.lock
+*.png
+*.svg
+pnpm-lock.yaml
+
+# Pre-existing spec docs — owned by Nil, left as-authored.
+HANDOFF.md
+PROMPT.md

@@ -14,11 +14,14 @@ export const MAX_NODES = 7;
 export const WINS_TO_WIN = 5;
 export const ROUND_TIMER_MS = 20000;
 
-// Clean, always-readable default label pool (no look-alikes: no I/O).
-export const LABEL_POOL = "ABCDEFGHJKLMNPQRSTUVWXYZ".split("");
+// Letter pool (clean, no look-alikes) — kept available as an alternate.
+export const LETTER_POOL = "ABCDEFGHJKLMNPQRSTUVWXYZ".split("");
 
-// Alternate emoji pool, behind a constant so it's easy to swap.
-export const EMOJI_POOL = ["🔥", "💧", "🌿", "⚡", "🪨", "🌪️", "🌙", "☀️", "❄️", "🌊"];
+// Colorful, glanceable emoji. Must hold at least MAX_NODES distinct entries.
+export const EMOJI_POOL = ["🔥", "💧", "🌿", "⚡", "🪨", "🌸", "❄️", "🌙", "☀️", "🍄", "🌊", "⭐"];
+
+// Default labels: emoji are faster to read and more distinct than letters.
+export const LABEL_POOL = EMOJI_POOL;
 
 interface GenerateOpts {
   minNodes?: number;

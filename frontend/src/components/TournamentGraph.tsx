@@ -133,9 +133,23 @@ export function TournamentGraph({
             const ex = p2.x - ux * (NODE_R + 4);
             const ey = p2.y - uy * (NODE_R + 4);
 
-            // Perpendicular curve offset so opposing arrows don't overlap.
-            const mx = (sx + ex) / 2 + -uy * 16;
-            const my = (sy + ey) / 2 + ux * 16;
+            // Bow every edge AWAY from the graph center (independent of the
+            // arrow's direction) so the perimeter edges form a clean circular
+            // outline. Central chords bow only gently.
+            const midX = (sx + ex) / 2;
+            const midY = (sy + ey) / 2;
+            let nx = -uy;
+            let ny = ux;
+            const outX = midX - CENTER;
+            const outY = midY - CENTER;
+            if (nx * outX + ny * outY < 0) {
+              nx = -nx;
+              ny = -ny;
+            }
+            const rimFrac = Math.min(1, Math.hypot(outX, outY) / RADIUS);
+            const bow = 12 + 30 * rimFrac;
+            const mx = midX + nx * bow;
+            const my = midY + ny * bow;
 
             const isDeciding =
               decidingEdge !== null &&

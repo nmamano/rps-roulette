@@ -73,8 +73,8 @@ bun run ci         # prettier --check + eslint + tests + frontend build
 | `RECONNECT_GRACE_MS` | 30000   | `shared/config`     | room kept alive after a drop for rejoin-by-code |
 | `CODE_LENGTH`        | 4       | `shared/config`     | room code length (no look-alike chars)          |
 
-Labels default to single uppercase letters (`LABEL_POOL`); an emoji pool
-(`EMOJI_POOL`) is available behind a constant.
+Labels default to a colorful emoji pool (`LABEL_POOL` = `EMOJI_POOL`); a letter
+pool (`LETTER_POOL`) is available as an alternate.
 
 ## Deploy (fly.io)
 

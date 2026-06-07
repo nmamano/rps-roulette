@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
+import { copyText } from "@/lib/clipboard";
 
 interface Props {
   code: string;
@@ -8,16 +9,19 @@ interface Props {
 
 export function Waiting({ code, onCancel }: Props) {
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
+  const [failed, setFailed] = useState(false);
 
   const shareLink = `${location.origin}/?room=${code}`;
 
   const copy = async (what: "code" | "link", text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const ok = await copyText(text);
+    if (ok) {
+      setFailed(false);
       setCopied(what);
       setTimeout(() => setCopied(null), 1500);
-    } catch {
-      // clipboard unavailable; ignore
+    } else {
+      setFailed(true);
+      setTimeout(() => setFailed(false), 2500);
     }
   };
 
@@ -61,6 +65,12 @@ export function Waiting({ code, onCancel }: Props) {
             {copied === "link" ? "Copied!" : "Copy link"}
           </Button>
         </div>
+
+        {failed && (
+          <p className="mt-3 text-xs font-semibold text-muted-foreground">
+            Couldn&apos;t copy automatically — just read the code above to your friend.
+          </p>
+        )}
 
         <div className="mt-6 flex items-center justify-center gap-2 text-sm font-semibold text-muted-foreground">
           <span className="flex gap-1">

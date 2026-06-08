@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/Button";
-import { WINS_TO_WIN } from "@shared/tournament";
 
 const ADJ = [
   "Swift",
@@ -56,10 +55,7 @@ export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy 
           RPS <span className="text-primary">Roulette</span>
         </h1>
         <p className="max-w-md font-sans leading-relaxed text-pretty text-muted-foreground">
-          {
-            "Rock-Paper-Scissors, but the rules get reshuffled every single round! Each turn spins up a brand-new little tournament graph — follow the arrows, out-guess your opponent, and be the first to "
-          }
-          {WINS_TO_WIN} {"wins."}
+          Rock-Paper-Scissors, but the rules get reshuffled every round!
         </p>
       </div>
 
@@ -145,19 +141,6 @@ export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy 
             Create a game and share the 4-letter code with a friend to play.
           </p>
         )}
-      </div>
-
-      <div className="grid w-full grid-cols-3 gap-3 text-center">
-        {[
-          { k: "5–7", v: "nodes / round" },
-          { k: `first to ${WINS_TO_WIN}`, v: "takes the match" },
-          { k: "20s", v: "to lock a pick" },
-        ].map((s) => (
-          <div key={s.v} className="rounded-2xl border-2 border-border bg-card px-3 py-4">
-            <div className="font-heading text-lg font-extrabold text-primary">{s.k}</div>
-            <div className="mt-1 text-xs text-muted-foreground">{s.v}</div>
-          </div>
-        ))}
       </div>
     </main>
   );

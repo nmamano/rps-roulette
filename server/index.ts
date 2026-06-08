@@ -13,6 +13,20 @@ const app = new Hono();
 // Quiet under `bun test` (NODE_ENV=test); log requests in dev/prod.
 if (process.env.NODE_ENV !== "test") app.use("*", logger());
 
+// Cache policy: content-hashed assets are immutable (cache for a year);
+// everything else (notably index.html) must revalidate so a new deploy is picked
+// up without a hard refresh. Skip the WS upgrade and the health check.
+app.use("*", async (c, next) => {
+  await next();
+  const p = c.req.path;
+  if (p === "/ws" || p === "/health") return;
+  if (p.startsWith("/assets/")) {
+    c.header("Cache-Control", "public, max-age=31536000, immutable");
+  } else {
+    c.header("Cache-Control", "no-cache");
+  }
+});
+
 const store = new RoomStore();
 const websocket = registerSocket(app, store);
 

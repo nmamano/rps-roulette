@@ -257,16 +257,22 @@ export function Game({
               </Button>
             </div>
           </div>
-        ) : interactive && selected !== null && tournament && degrees ? (
-          <button
-            type="button"
-            onClick={() => onPick(selected)}
-            className="rounded-full bg-primary px-6 py-2 font-heading text-lg font-bold text-primary-foreground shadow-[0_4px_0_0_var(--border)] transition-transform active:translate-y-px"
-          >
-            Lock in {tournament.labels[selected]} (beats {degrees[selected]}/{tournament.n - 1})
-          </button>
         ) : (
-          <p className="font-heading text-lg font-bold">{status}</p>
+          // Reserve a consistent height so the pill does not grow when the
+          // "Pick a node" text becomes the taller Lock-in button.
+          <div className="flex min-h-11 items-center justify-center">
+            {interactive && selected !== null && tournament && degrees ? (
+              <button
+                type="button"
+                onClick={() => onPick(selected)}
+                className="rounded-full bg-primary px-6 py-2 font-heading text-lg font-bold text-primary-foreground shadow-[0_4px_0_0_var(--border)] transition-transform active:translate-y-px"
+              >
+                Lock in {tournament.labels[selected]} (beats {degrees[selected]}/{tournament.n - 1})
+              </button>
+            ) : (
+              <p className="font-heading text-lg font-bold">{status}</p>
+            )}
+          </div>
         )}
       </div>
 

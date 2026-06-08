@@ -150,7 +150,7 @@ export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy 
       <div className="grid w-full grid-cols-3 gap-3 text-center">
         {[
           { k: "5–7", v: "nodes / round" },
-          { k: "first to 5", v: "takes the match" },
+          { k: `first to ${WINS_TO_WIN}`, v: "takes the match" },
           { k: "20s", v: "to lock a pick" },
         ].map((s) => (
           <div key={s.v} className="rounded-2xl border-2 border-border bg-card px-3 py-4">

@@ -11,17 +11,17 @@ export type RoundOutcome = "p1" | "p2" | "tie";
 
 export const MIN_NODES = 5;
 export const MAX_NODES = 7;
-export const WINS_TO_WIN = 5;
+export const WINS_TO_WIN = 3;
 export const ROUND_TIMER_MS = 20000;
 
 // Letter pool (clean, no look-alikes) — kept available as an alternate.
 export const LETTER_POOL = "ABCDEFGHJKLMNPQRSTUVWXYZ".split("");
 
-// Colorful, glanceable emoji. Must hold at least MAX_NODES distinct entries.
-export const EMOJI_POOL = ["🔥", "💧", "🌿", "⚡", "🪨", "🌸", "❄️", "🌙", "☀️", "🍄", "🌊", "⭐"];
+// Colorful, glanceable animal faces. Must hold at least MAX_NODES distinct entries.
+export const ANIMAL_POOL = ["🐶", "🐱", "🦊", "🐻", "🐼", "🐸", "🦁", "🐵", "🐯", "🐨", "🐷", "🐰"];
 
-// Default labels: emoji are faster to read and more distinct than letters.
-export const LABEL_POOL = EMOJI_POOL;
+// Default labels: distinct, recognizable animal faces.
+export const LABEL_POOL = ANIMAL_POOL;
 
 interface GenerateOpts {
   minNodes?: number;

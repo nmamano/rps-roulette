@@ -285,20 +285,27 @@ export function TournamentGraph({
         })}
       </svg>
 
-      {/* Hover legend */}
+      {/* Hover legend. Both rows have fixed dimensions so nothing shifts (and
+          the vertically-centered graph above never moves) when hovering. */}
       {interactive && (
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-5 rounded-full bg-win" /> beats
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-2.5 w-5 rounded-full bg-lose" /> loses to
-          </span>
-          {hover !== null && (
-            <span className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground">
-              {labels[hover]} beats {degrees[hover]}/{n - 1}
+        <div className="mt-3 flex flex-col items-center gap-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-x-5">
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-5 rounded-full bg-win" /> beats
             </span>
-          )}
+            <span className="flex items-center gap-1.5">
+              <span className="h-2.5 w-5 rounded-full bg-lose" /> loses to
+            </span>
+          </div>
+          {/* Reserved-height row: the badge toggles visibility, never layout. */}
+          <div className="flex h-7 items-center">
+            <span
+              className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground"
+              style={{ visibility: hover !== null ? "visible" : "hidden" }}
+            >
+              {hover !== null ? `${labels[hover]} beats ${degrees[hover]}/${n - 1}` : " "}
+            </span>
+          </div>
         </div>
       )}
     </div>

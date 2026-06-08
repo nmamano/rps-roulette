@@ -76,6 +76,8 @@ export function Game({
   const revealing = phase === "revealing" || phase === "matchOver";
   const locked = youPicked || myPick !== null;
   const interactive = phase === "picking" && !locked;
+  // You never locked a pick this round → the server auto-picked a random node.
+  const timedOut = revealing && myPick === null;
 
   const yourPick = revealing && lastResult ? lastResult.picks[me] : myPick;
   const oppPick = revealing && lastResult ? lastResult.picks[opp] : null;
@@ -94,12 +96,22 @@ export function Game({
   if (phase === "picking" && !oppConnected)
     status = `${oppName} disconnected — waiting for them to return…`;
   if (phase === "revealing") {
-    status =
-      myOutcome === "tie"
-        ? "Same pick — it's a tie! No point this round."
-        : myOutcome === "you"
-          ? "Yay, you win the round!"
-          : `${oppName} takes the round.`;
+    if (timedOut) {
+      const tail =
+        myOutcome === "tie"
+          ? "it happened to match — tie!"
+          : myOutcome === "you"
+            ? "you won anyway!"
+            : `${oppName} took the round.`;
+      status = `⏱ Time's up! A random node was auto-picked for you — ${tail}`;
+    } else {
+      status =
+        myOutcome === "tie"
+          ? "Same pick — it's a tie! No point this round."
+          : myOutcome === "you"
+            ? "Yay, you win the round!"
+            : `${oppName} takes the round.`;
+    }
   }
   if (phase === "matchOver") status = iWon ? "You won the match!" : "You lost the match.";
 

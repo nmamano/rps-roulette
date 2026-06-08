@@ -67,14 +67,14 @@ bun run ci         # prettier --check + eslint + tests + frontend build
 | -------------------- | ------- | ------------------- | ----------------------------------------------- |
 | `MIN_NODES`          | 5       | `shared/tournament` | min nodes per round                             |
 | `MAX_NODES`          | 7       | `shared/tournament` | max nodes per round                             |
-| `WINS_TO_WIN`        | 5       | `shared/tournament` | round wins to take the match (best-of)          |
+| `WINS_TO_WIN`        | 3       | `shared/tournament` | round wins to take the match (best-of)          |
 | `ROUND_TIMER_MS`     | 20000   | `shared/tournament` | per-round pick timer (auto-picks on expiry)     |
 | `REVEAL_MS`          | 2500    | `shared/config`     | how long the reveal lingers before next round   |
 | `RECONNECT_GRACE_MS` | 30000   | `shared/config`     | room kept alive after a drop for rejoin-by-code |
 | `CODE_LENGTH`        | 4       | `shared/config`     | room code length (no look-alike chars)          |
 
-Labels default to a colorful emoji pool (`LABEL_POOL` = `EMOJI_POOL`); a letter
-pool (`LETTER_POOL`) is available as an alternate.
+Labels default to a colorful animal-face pool (`LABEL_POOL` = `ANIMAL_POOL`); a
+letter pool (`LETTER_POOL`) is available as an alternate.
 
 ## Deploy (fly.io)
 

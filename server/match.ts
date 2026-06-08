@@ -7,6 +7,7 @@
 import {
   generateTournament,
   resolveRound,
+  outDegrees,
   WINS_TO_WIN,
   ROUND_TIMER_MS,
   type Tournament,
@@ -114,6 +115,10 @@ export class Match {
     return this.picks.p1 !== null && this.picks.p2 !== null;
   }
 
+  hasPicked(pid: PlayerId): boolean {
+    return this.picks[pid] !== null;
+  }
+
   /** Per-client view. Carries no pick values — see RoomSnapshot anti-cheat note. */
   snapshotFor(pid: PlayerId): Omit<RoomSnapshot, "code"> {
     const players: PlayerView[] = [
@@ -159,4 +164,23 @@ export class Match {
     }
     this.version += 1; // invalidate the now-stale picking timer
   }
+}
+
+/**
+ * Bot move (strategy "b"): weighted toward high out-degree nodes — the ones
+ * that beat the most others — with a bump for the current maximum and enough
+ * noise to stay beatable. Picking a max-out-degree node is the best response to
+ * a *random* opponent, but a thinking player can exploit the bot's bias.
+ */
+export function botMove(t: Tournament, rng: () => number): number {
+  const deg = outDegrees(t);
+  const max = Math.max(...deg);
+  const weights = deg.map((d) => Math.pow(d + 1, 2) + (d === max ? 1.5 : 0));
+  const total = weights.reduce((a, b) => a + b, 0);
+  let r = rng() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return i;
+  }
+  return weights.length - 1;
 }

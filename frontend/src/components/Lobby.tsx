@@ -33,13 +33,14 @@ function randomName() {
 
 interface Props {
   onCreate: (name: string) => void;
+  onCreateBot: (name: string) => void;
   onJoin: (code: string, name: string) => void;
   initialCode?: string;
   error?: string | null;
   busy?: boolean;
 }
 
-export function Lobby({ onCreate, onJoin, initialCode, error, busy }: Props) {
+export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy }: Props) {
   const [name, setName] = useState(randomName);
   const [code, setCode] = useState((initialCode ?? "").toUpperCase().slice(0, 4));
 
@@ -95,6 +96,15 @@ export function Lobby({ onCreate, onJoin, initialCode, error, busy }: Props) {
           onClick={() => onCreate(trimmedName())}
         >
           Create game
+        </Button>
+
+        <Button
+          variant="secondary"
+          className="mt-2 w-full rounded-2xl py-5 text-base"
+          disabled={busy}
+          onClick={() => onCreateBot(trimmedName())}
+        >
+          🤖 Play vs Bot
         </Button>
 
         <div className="my-5 flex items-center gap-3 font-heading text-xs font-bold tracking-widest text-muted-foreground uppercase">

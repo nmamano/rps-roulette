@@ -166,6 +166,24 @@ describe("integration (real WS)", () => {
     intruder.close();
   });
 
+  test("solo vs bot: starts immediately, bot auto-picks, a round resolves", async () => {
+    const p = client();
+    await p.opened();
+    p.send({ t: "createBot", name: "Solo" });
+    const j = await p.waitFor("joined");
+    expect(j.you).toBe("p1");
+    expect(j.state.phase).toBe("picking"); // no waiting room for bot games
+    const bot = j.state.players.find((pl) => pl.id === "p2");
+    expect(bot?.connected).toBe(true);
+    expect((bot?.name.length ?? 0) > 0).toBe(true);
+
+    // Human picks; the bot auto-picks within its think time → the round resolves.
+    p.send({ t: "pick", node: 0 });
+    const rr = await p.waitFor("roundResult", undefined, 4000);
+    expect(["p1", "p2", "tie"]).toContain(rr.outcome);
+    p.close();
+  });
+
   test("explicit leave notifies the opponent", async () => {
     const { p1, p2 } = await startMatch();
     p1.send({ t: "leave" });

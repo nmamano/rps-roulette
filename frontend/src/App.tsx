@@ -112,6 +112,12 @@ export function App() {
     netRef.current?.send({ t: "create", name });
   }, []);
 
+  const createBot = useCallback((name: string) => {
+    nameRef.current = name;
+    setError(null);
+    netRef.current?.send({ t: "createBot", name });
+  }, []);
+
   const join = useCallback((code: string, name: string) => {
     nameRef.current = name;
     setError(null);
@@ -146,6 +152,7 @@ export function App() {
     view = (
       <Lobby
         onCreate={create}
+        onCreateBot={createBot}
         onJoin={join}
         initialCode={roomFromUrl()}
         error={error}

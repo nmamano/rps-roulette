@@ -95,3 +95,6 @@ fly deploy
 - 20s pick timer; on expiry a uniformly-random node is auto-picked (no forfeit).
 - Lock-in is final: the first valid pick each round sticks.
 - Rematch keeps both players in the room and resets the score.
+- **Play vs Bot** (solo): a server-driven bot fills the second seat. It weights
+  its pick toward high out-degree nodes (with noise), so it's competent but
+  beatable. Indistinguishable from a human to the client — the server drives it.

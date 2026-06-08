@@ -58,6 +58,21 @@ export function registerSocket(app: Hono, store: RoomStore) {
             });
             return;
           }
+          case "createBot": {
+            if (active()) return;
+            const room = store.createRoom();
+            const { pid, token } = room.startWithBot(msg.name, conn);
+            bound = { room, pid };
+            conn.send({
+              t: "joined",
+              code: room.code,
+              you: pid,
+              token,
+              state: room.snapshotFor(pid),
+            });
+            room.broadcast(); // push the initial picking state
+            return;
+          }
           case "join": {
             if (active()) return;
             const room = store.get(msg.code);

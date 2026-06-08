@@ -42,6 +42,7 @@ export interface RoomSnapshot {
 
 export type ClientMsg =
   | { t: "create"; name: string }
+  | { t: "createBot"; name: string }
   | { t: "join"; code: string; name: string }
   | { t: "reconnect"; code: string; token: string }
   | { t: "pick"; node: number }

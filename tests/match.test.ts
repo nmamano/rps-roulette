@@ -1,6 +1,6 @@
 import { test, expect, describe } from "bun:test";
-import { Match, type MatchPlayer } from "../server/match";
-import { WINS_TO_WIN } from "../shared/tournament";
+import { Match, botMove, type MatchPlayer } from "../server/match";
+import { WINS_TO_WIN, type Tournament } from "../shared/tournament";
 
 function mulberry32(seed: number): () => number {
   return function () {
@@ -208,5 +208,34 @@ describe("version semantics (pins stale-timer protection)", () => {
     expect(m.forceTimeout()).toBe(true);
     expect(m.version).toBe(v + 1);
     expect(m.phase === "revealing" || m.phase === "matchOver").toBe(true);
+  });
+});
+
+describe("botMove (strategy b)", () => {
+  // node 0 beats {1,2}, node 1 beats {2}, node 2 beats nobody → out-degrees [2,1,0]
+  const ranked: Tournament = {
+    n: 3,
+    labels: ["a", "b", "c"],
+    beats: [
+      [false, true, true],
+      [false, false, true],
+      [false, false, false],
+    ],
+  };
+
+  test("always returns an in-range node", () => {
+    for (let seed = 0; seed < 200; seed++) {
+      const node = botMove(ranked, mulberry32(seed));
+      expect(Number.isInteger(node)).toBe(true);
+      expect(node).toBeGreaterThanOrEqual(0);
+      expect(node).toBeLessThan(ranked.n);
+    }
+  });
+
+  test("favors high out-degree but can still pick weaker nodes (beatable)", () => {
+    // The low end of the weighted draw lands on the strongest node.
+    expect(botMove(ranked, () => 0)).toBe(0);
+    // The very top of the draw can reach the weakest node — so it's exploitable.
+    expect(botMove(ranked, () => 0.999999)).toBe(2);
   });
 });

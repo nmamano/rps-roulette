@@ -2,7 +2,8 @@
 // (round + reconnect-grace) and the only place that broadcasts to clients.
 
 import { customAlphabet } from "nanoid";
-import { Match, type MatchPlayer } from "./match";
+import { Match, botMove, type MatchPlayer } from "./match";
+import { ROUND_TIMER_MS } from "../shared/tournament";
 import {
   REVEAL_MS,
   RECONNECT_GRACE_MS,
@@ -30,6 +31,13 @@ interface Slot {
   token: string;
   conn: Connection | null;
   graceTimer: Timer | null;
+  isBot?: boolean;
+}
+
+const BOT_NAMES = ["RNGesus 🤖", "Botzart 🤖", "PickBot 🤖", "DeepPick 🤖", "Sir Picksalot 🤖"];
+
+function botName(): string {
+  return BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
 }
 
 interface JoinError {
@@ -48,6 +56,8 @@ export class Room {
   match: Match | null = null;
   private slots: { p1: Slot | null; p2: Slot | null } = { p1: null, p2: null };
   private roundTimer: Timer | null = null;
+  private botTimer: Timer | null = null;
+  private botPid: PlayerId | null = null;
 
   constructor(
     readonly code: string,
@@ -68,6 +78,29 @@ export class Room {
       conn,
       graceTimer: null,
     };
+    return { pid: "p1", token };
+  }
+
+  /** Start a solo game vs a server-driven bot (the human is p1). */
+  startWithBot(name: string, conn: Connection): { pid: "p1"; token: string } {
+    const token = genToken();
+    this.slots.p1 = {
+      player: { id: "p1", name: cleanName(name), connected: true },
+      token,
+      conn,
+      graceTimer: null,
+    };
+    this.slots.p2 = {
+      player: { id: "p2", name: botName(), connected: true },
+      token: "", // bots never reconnect
+      conn: null,
+      graceTimer: null,
+      isBot: true,
+    };
+    this.botPid = "p2";
+    this.match = new Match({ p1: this.slots.p1.player, p2: this.slots.p2.player });
+    this.match.start();
+    this.reconcileTimers();
     return { pid: "p1", token };
   }
 
@@ -179,6 +212,10 @@ export class Room {
       clearTimeout(this.roundTimer);
       this.roundTimer = null;
     }
+    if (this.botTimer) {
+      clearTimeout(this.botTimer);
+      this.botTimer = null;
+    }
     for (const pid of ["p1", "p2"] as const) {
       const s = this.slots[pid];
       if (s?.graceTimer) {
@@ -198,6 +235,10 @@ export class Room {
       clearTimeout(this.roundTimer);
       this.roundTimer = null;
     }
+    if (this.botTimer) {
+      clearTimeout(this.botTimer);
+      this.botTimer = null;
+    }
     const m = this.match;
     if (!m) return;
 
@@ -210,6 +251,20 @@ export class Room {
           this.reconcileTimers();
         }
       }, delay);
+
+      // Bot rooms: schedule the bot's pick at a stable per-round "think" time,
+      // so a human picking first doesn't keep pushing the bot's deadline back.
+      if (this.botPid && !m.hasPicked(this.botPid)) {
+        const botPid = this.botPid;
+        const roundStart = m.deadline - ROUND_TIMER_MS;
+        const thinkMs = 700 + ((m.round * 137) % 1300); // 0.7–2.0s, varies per round
+        const botDelay = Math.max(0, roundStart + thinkMs - Date.now());
+        this.botTimer = setTimeout(() => {
+          if (m.phase === "picking" && m.version === v && !m.hasPicked(botPid)) {
+            this.applyBotPick(botPid, botMove(m.tournament!, Math.random));
+          }
+        }, botDelay);
+      }
     } else if (m.phase === "revealing") {
       const v = m.version;
       this.roundTimer = setTimeout(() => {
@@ -219,6 +274,15 @@ export class Room {
         }
       }, REVEAL_MS);
     }
+  }
+
+  /** Apply a server-driven bot pick (no conn to validate). */
+  private applyBotPick(botPid: PlayerId, node: number): void {
+    if (!this.match) return;
+    if (!this.match.pick(botPid, node)) return;
+    if (this.match.phase === "picking") this.broadcast();
+    else this.broadcastResult();
+    this.reconcileTimers();
   }
 
   // ---- snapshots / broadcast -------------------------------------------

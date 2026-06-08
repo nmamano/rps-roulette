@@ -32,10 +32,11 @@ export function TournamentGraph({
   // first tap on touch (which has no hover). On touch, a second tap on the same
   // staged node commits the pick. See the node handlers below.
   const [staged, setStaged] = useState<number | null>(null);
-  // Touch devices (coarse primary pointer) have no hover, so picks are two-step:
-  // first tap previews, second tap commits. Fine pointers commit on one click.
-  const isCoarse = useMemo(
-    () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
+  // Cosmetic only: whether to show the "tap to lock" hint. The two-step behavior
+  // itself does not depend on this (see the click handler), so a wrong reading
+  // here never breaks committing a pick.
+  const isTouch = useMemo(
+    () => typeof navigator !== "undefined" && navigator.maxTouchPoints > 0,
     [],
   );
   const { n, labels, beats } = tournament;
@@ -240,10 +241,11 @@ export function TournamentGraph({
               }}
               onClick={() => {
                 if (!interactive) return;
-                // Fine pointer (mouse): hover already previewed, so commit on
-                // click. Coarse pointer (touch): first tap stages a preview, a
-                // second tap on the same node commits.
-                if (!isCoarse || staged === i) onPick(i);
+                // Detection-free two-step: commit only a node that is already the
+                // staged/previewed one, otherwise stage it. On desktop the mouse
+                // hover pre-stages, so one click commits; on touch (no hover) the
+                // first tap stages and a second tap on the same node commits.
+                if (staged === i) onPick(i);
                 else setStaged(i);
               }}
               onFocus={() => interactive && setStaged(i)}
@@ -336,7 +338,7 @@ export function TournamentGraph({
             >
               {staged !== null
                 ? `${labels[staged]} beats ${degrees[staged]}/${n - 1}${
-                    isCoarse ? " · tap to lock" : ""
+                    isTouch ? " · tap to lock" : ""
                   }`
                 : " "}
             </span>

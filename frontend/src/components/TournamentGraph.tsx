@@ -28,23 +28,22 @@ export function TournamentGraph({
   outcome,
   interactive,
 }: Props) {
-  // `staged` is the previewed node: set by mouse hover / keyboard focus, or by a
-  // first tap on touch (which has no hover). On touch, a second tap on the same
-  // staged node commits the pick. See the node handlers below.
-  const [staged, setStaged] = useState<number | null>(null);
-  // Cosmetic only: whether to show the "tap to lock" hint. The two-step behavior
-  // itself does not depend on this (see the click handler), so a wrong reading
-  // here never breaks committing a pick.
-  const isTouch = useMemo(
-    () => typeof navigator !== "undefined" && navigator.maxTouchPoints > 0,
-    [],
-  );
+  // Two-step pick, robust across devices: clicking/tapping a node only SELECTS
+  // it (never commits); committing is a separate "Lock in" button. A node tap
+  // can never commit, even if a platform fires synthetic mouse events on touch.
+  // `hovered` is a transient desktop hover; `selected` is the chosen node.
+  const [hovered, setHovered] = useState<number | null>(null);
+  const [selected, setSelected] = useState<number | null>(null);
+  const preview = hovered ?? selected;
   const { n, labels, beats } = tournament;
 
-  // Clear any stale preview when a fresh picking round begins, so a node left
-  // staged on touch (where no pointerleave fires) does not look pre-selected.
+  // Clear selection/hover when a fresh picking round begins so nothing looks
+  // pre-selected (notably on touch, where no pointerleave fires).
   useEffect(() => {
-    if (interactive) setStaged(null);
+    if (interactive) {
+      setSelected(null);
+      setHovered(null);
+    }
   }, [interactive]);
 
   const points = useMemo(() => {
@@ -71,7 +70,7 @@ export function TournamentGraph({
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="h-auto w-full max-w-[460px] touch-none overflow-visible select-none"
         role="img"
-        aria-label="Tournament graph. Hover or tap a node to see what it beats."
+        aria-label="Tournament graph. Select a move, then lock it in."
       >
         <defs>
           <marker
@@ -167,16 +166,16 @@ export function TournamentGraph({
                   : "text-lose stroke-lose"
                 : null;
 
-            // Preview hint: highlight edges touching the staged node.
+            // Preview hint: highlight edges touching the previewed node.
             let state: "win" | "lose" | "idle" = "idle";
-            if (staged !== null && !revealing) {
-              if (from === staged) state = "win";
-              else if (to === staged) state = "lose";
+            if (preview !== null && !revealing) {
+              if (from === preview) state = "win";
+              else if (to === preview) state = "lose";
             }
 
             // Edges not connected to focus stay clearly visible (lighter, not invisible).
             const faded =
-              (staged !== null && state === "idle" && !revealing) || (revealing && !isDeciding);
+              (preview !== null && state === "idle" && !revealing) || (revealing && !isDeciding);
 
             return (
               <path
@@ -216,7 +215,8 @@ export function TournamentGraph({
         {points.map((p, i) => {
           const isYou = yourPick === i;
           const isOpp = oppPick === i && revealing;
-          const isStaged = staged === i;
+          const isPreview = preview === i;
+          const isSelected = selected === i && interactive && !revealing;
           const isWinner =
             revealing &&
             outcome !== "tie" &&
@@ -232,38 +232,34 @@ export function TournamentGraph({
             <g
               key={i}
               onPointerEnter={(e) => {
-                // Mouse hover previews. Touch fires this too, but staging is
-                // driven by the tap handler so it does not commit on contact.
-                if (interactive && e.pointerType === "mouse") setStaged(i);
+                if (interactive && e.pointerType === "mouse") setHovered(i);
               }}
               onPointerLeave={(e) => {
-                if (e.pointerType === "mouse") setStaged(null);
+                if (e.pointerType === "mouse") setHovered(null);
               }}
               onClick={() => {
-                if (!interactive) return;
-                // Detection-free two-step: commit only a node that is already the
-                // staged/previewed one, otherwise stage it. On desktop the mouse
-                // hover pre-stages, so one click commits; on touch (no hover) the
-                // first tap stages and a second tap on the same node commits.
-                if (staged === i) onPick(i);
-                else setStaged(i);
+                // Clicking/tapping only SELECTS. Commit is the Lock-in button, so
+                // a node tap can never commit (immune to synthetic/double events).
+                if (interactive) setSelected(i);
               }}
-              onFocus={() => interactive && setStaged(i)}
-              onBlur={() => setStaged(null)}
+              onFocus={() => interactive && setHovered(i)}
+              onBlur={() => setHovered(null)}
               role={interactive ? "button" : undefined}
               tabIndex={interactive ? 0 : undefined}
               aria-label={
-                interactive ? `Pick node ${labels[i]}, beats ${degrees[i]} of ${n - 1}` : undefined
+                interactive
+                  ? `Select node ${labels[i]}, beats ${degrees[i]} of ${n - 1}`
+                  : undefined
               }
               onKeyDown={(e) => {
                 if (interactive && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
-                  onPick(i);
+                  setSelected(i);
                 }
               }}
               className={cn("origin-center transition-transform", interactive && "cursor-pointer")}
               style={{
-                transform: isStaged || isYou || isOpp ? "scale(1.08)" : undefined,
+                transform: isPreview || isYou || isOpp ? "scale(1.08)" : undefined,
                 transformBox: "fill-box",
                 transformOrigin: "center",
               }}
@@ -284,6 +280,16 @@ export function TournamentGraph({
                   />
                 </circle>
               )}
+              {isSelected && (
+                <circle
+                  cx={p.x}
+                  cy={p.y}
+                  r={NODE_R + 6}
+                  className="fill-none stroke-you"
+                  strokeWidth={2.5}
+                  strokeDasharray="5 4"
+                />
+              )}
               <circle
                 cx={p.x}
                 cy={p.y}
@@ -295,7 +301,7 @@ export function TournamentGraph({
                     ? "fill-you stroke-you"
                     : isOpp
                       ? "fill-opponent stroke-opponent"
-                      : isStaged
+                      : isPreview
                         ? "fill-you/15 stroke-you"
                         : "fill-card stroke-border",
                 )}
@@ -318,10 +324,10 @@ export function TournamentGraph({
         })}
       </svg>
 
-      {/* Hover legend. Both rows have fixed dimensions so nothing shifts (and
-          the vertically-centered graph above never moves) when hovering. */}
+      {/* Color legend + action row. The action row has a reserved height so the
+          graph above never shifts when its contents change. */}
       {interactive && (
-        <div className="mt-3 flex flex-col items-center gap-1.5 text-sm text-muted-foreground">
+        <div className="mt-3 flex flex-col items-center gap-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-x-5">
             <span className="flex items-center gap-1.5">
               <span className="h-2.5 w-5 rounded-full bg-win" /> beats
@@ -330,18 +336,22 @@ export function TournamentGraph({
               <span className="h-2.5 w-5 rounded-full bg-lose" /> loses to
             </span>
           </div>
-          {/* Reserved-height row: the badge toggles visibility, never layout. */}
-          <div className="flex h-7 items-center">
-            <span
-              className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground"
-              style={{ visibility: staged !== null ? "visible" : "hidden" }}
-            >
-              {staged !== null
-                ? `${labels[staged]} beats ${degrees[staged]}/${n - 1}${
-                    isTouch ? " · tap to lock" : ""
-                  }`
-                : " "}
-            </span>
+          <div className="flex h-10 items-center">
+            {selected !== null ? (
+              <button
+                type="button"
+                onClick={() => onPick(selected)}
+                className="rounded-full bg-primary px-6 py-2 font-heading font-bold text-primary-foreground shadow-[0_4px_0_0_var(--border)] transition-transform active:translate-y-px"
+              >
+                Lock in {labels[selected]} (beats {degrees[selected]}/{n - 1})
+              </button>
+            ) : preview !== null ? (
+              <span className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground">
+                {labels[preview]} beats {degrees[preview]}/{n - 1}
+              </span>
+            ) : (
+              <span>Tap a move to preview it</span>
+            )}
           </div>
         </div>
       )}

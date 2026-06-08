@@ -134,6 +134,7 @@ export class Match {
       youPicked: this.picks[pid] !== null,
       bothPicked: this.bothPicked(),
       deadline: this.deadline,
+      roundTimerMs: this.phase === "picking" ? ROUND_TIMER_MS : null,
       winner: this.winner,
     };
   }

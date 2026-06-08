@@ -62,7 +62,8 @@ export function Game({
   const me = you;
   const opp: PlayerId = you === "p1" ? "p2" : "p1";
 
-  const { phase, score, round, tournament, deadline, winner, players, youPicked } = snapshot;
+  const { phase, score, round, tournament, deadline, roundTimerMs, winner, players, youPicked } =
+    snapshot;
   const myName = players.find((p) => p.id === me)?.name ?? "You";
   const oppPlayer = players.find((p) => p.id === opp);
   const oppName = oppPlayer?.name ?? "Opponent";
@@ -70,7 +71,8 @@ export function Game({
 
   const remaining = useCountdown(deadline);
   const seconds = remaining !== null ? Math.ceil(remaining / 1000) : null;
-  const pct = remaining !== null ? (remaining / ROUND_TIMER_MS) * 100 : 100;
+  const pct =
+    remaining !== null ? Math.min(100, (remaining / (roundTimerMs ?? ROUND_TIMER_MS)) * 100) : 100;
   const urgent = remaining !== null && remaining < 5000;
 
   const revealing = phase === "revealing" || phase === "matchOver";
@@ -91,7 +93,7 @@ export function Game({
       : null;
   const iWon = winner === me;
 
-  let status = "Pick a node — the arrow pointing at your opponent wins!";
+  let status = "Pick a node";
   if (phase === "picking" && locked) status = "Locked in! Waiting on your opponent…";
   if (phase === "picking" && !oppConnected)
     status = `${oppName} disconnected — waiting for them to return…`;

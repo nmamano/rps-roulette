@@ -35,6 +35,7 @@ export interface RoomSnapshot {
   youPicked: boolean; // whether THIS client has locked a pick
   bothPicked: boolean; // both locked (reveal imminent)
   deadline: number | null; // epoch ms for the pick timer
+  roundTimerMs: number | null; // full pick timer duration for progress display
   winner: PlayerId | null; // set when phase === "matchOver"
 }
 

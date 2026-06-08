@@ -48,13 +48,10 @@ export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy 
   return (
     <main className="relative mx-auto flex min-h-screen w-full max-w-xl flex-col items-center justify-center gap-9 px-6 py-16">
       <div className="flex flex-col items-center gap-4 text-center">
-        <span className="rounded-full border-2 border-primary/30 bg-card px-4 py-1.5 font-heading text-xs font-bold tracking-widest text-primary uppercase">
-          new rules every round
-        </span>
         <h1 className="font-heading text-6xl font-extrabold tracking-tight text-balance sm:text-7xl">
           RPS <span className="text-primary">Roulette</span>
         </h1>
-        <p className="max-w-md font-sans leading-relaxed text-pretty text-muted-foreground">
+        <p className="max-w-md font-sans text-lg font-extrabold leading-relaxed text-pretty text-foreground">
           Rock-Paper-Scissors, but the rules get reshuffled every round!
         </p>
       </div>
@@ -100,7 +97,7 @@ export function Lobby({ onCreate, onCreateBot, onJoin, initialCode, error, busy 
           disabled={busy}
           onClick={() => onCreateBot(trimmedName())}
         >
-          🤖 Play vs Bot
+          Play vs Bot
         </Button>
 
         <div className="my-5 flex items-center gap-3 font-heading text-xs font-bold tracking-widest text-muted-foreground uppercase">

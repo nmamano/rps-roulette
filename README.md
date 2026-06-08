@@ -47,6 +47,14 @@ cd frontend && bun run dev
 Open <http://localhost:5173> in **two** browser windows: create a game in one,
 copy the 4-letter code (or share link `/?room=CODE`) into the other, and play.
 
+If port `3000` is already in use, run the backend on another port and point Vite
+at it:
+
+```bash
+PORT=3010 bun run dev
+cd frontend && RPS_BACKEND_URL=http://127.0.0.1:3010 bun run dev -- --port 5174
+```
+
 ### Production-style run
 
 ```bash
@@ -68,8 +76,8 @@ bun run ci         # prettier --check + eslint + tests + frontend build
 | `MIN_NODES`          | 5       | `shared/tournament` | min nodes per round                             |
 | `MAX_NODES`          | 7       | `shared/tournament` | max nodes per round                             |
 | `WINS_TO_WIN`        | 3       | `shared/tournament` | round wins to take the match (best-of)          |
-| `ROUND_TIMER_MS`     | 20000   | `shared/tournament` | per-round pick timer (auto-picks on expiry)     |
-| `REVEAL_MS`          | 2500    | `shared/config`     | how long the reveal lingers before next round   |
+| `ROUND_TIMER_MS`     | 30000   | `shared/tournament` | per-round pick timer (auto-picks on expiry)     |
+| `REVEAL_MS`          | 4500    | `shared/config`     | how long the reveal lingers before next round   |
 | `RECONNECT_GRACE_MS` | 30000   | `shared/config`     | room kept alive after a drop for rejoin-by-code |
 | `CODE_LENGTH`        | 4       | `shared/config`     | room code length (no look-alike chars)          |
 
@@ -92,7 +100,7 @@ fly deploy
 - `N` ∈ [5, 7] nodes, fresh random labels + random edge directions each round.
 - Both players secretly pick a node. `beats[a][b]` → player 1; same pick → tie
   (no point, round still advances). First to `WINS_TO_WIN` takes the match.
-- 20s pick timer; on expiry a uniformly-random node is auto-picked (no forfeit).
+- 30s pick timer; on expiry a uniformly-random node is auto-picked (no forfeit).
 - Lock-in is final: the first valid pick each round sticks.
 - Rematch keeps both players in the room and resets the score.
 - **Play vs Bot** (solo): a server-driven bot fills the second seat. It weights

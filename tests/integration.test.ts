@@ -6,6 +6,7 @@
 import { test, expect, describe, beforeAll, afterAll } from "bun:test";
 import app from "../server/index.ts";
 import type { ClientMsg, ServerMsg } from "../shared/protocol";
+import { ROUND_TIMER_MS } from "../shared/tournament";
 
 type OfType<K extends ServerMsg["t"]> = Extract<ServerMsg, { t: K }>;
 
@@ -98,6 +99,8 @@ describe("integration (real WS)", () => {
     const s = p1.last("state")!;
     expect(s.state.phase).toBe("picking");
     expect(s.state.players.find((p) => p.id === "p2")?.name).toBe("Bob");
+    expect(s.state.roundTimerMs).toBe(ROUND_TIMER_MS);
+    expect(s.state.deadline! - Date.now()).toBeGreaterThan(ROUND_TIMER_MS - 1000);
     p1.close();
     p2.close();
   });
@@ -119,7 +122,7 @@ describe("integration (real WS)", () => {
     expect(p2.states().every((m) => !JSON.stringify(m.state).includes('"pick"'))).toBe(true);
 
     // Server-driven reveal → next round (REVEAL_MS).
-    const next = await p1.waitFor("state", (m) => m.state.round === 2, 5000);
+    const next = await p1.waitFor("state", (m) => m.state.round === 2, 7000);
     expect(next.state.phase).toBe("picking");
     p1.close();
     p2.close();

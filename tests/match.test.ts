@@ -38,7 +38,8 @@ describe("Match", () => {
     expect(m.phase).toBe("picking");
     expect(m.round).toBe(1);
     expect(m.tournament).not.toBeNull();
-    expect(m.deadline).toBe(1000 + 20000);
+    expect(m.deadline).toBe(1000 + 30000);
+    expect(m.snapshotFor("p1").roundTimerMs).toBe(30000);
   });
 
   test("two picks resolve and update the score", () => {

@@ -12,7 +12,7 @@ export type RoundOutcome = "p1" | "p2" | "tie";
 export const MIN_NODES = 5;
 export const MAX_NODES = 7;
 export const WINS_TO_WIN = 3;
-export const ROUND_TIMER_MS = 20000;
+export const ROUND_TIMER_MS = 30000;
 
 // Letter pool (clean, no look-alikes) — kept available as an alternate.
 export const LETTER_POOL = "ABCDEFGHJKLMNPQRSTUVWXYZ".split("");

@@ -28,6 +28,8 @@
   --color-ring: var(--ring);
   --color-win: var(--win);
   --color-lose: var(--lose);
+  --color-you: var(--you);
+  --color-opponent: var(--opponent);
 }
 
 /* Raw design tokens — ported verbatim from the mock so visuals match exactly.
@@ -52,6 +54,8 @@
   --ring: oklch(0.75 0.15 5);
   --win: oklch(0.72 0.14 165);
   --lose: oklch(0.68 0.17 22);
+  --you: oklch(0.68 0.16 240);
+  --opponent: oklch(0.78 0.15 78);
 }
 
 @layer base {

@@ -91,17 +91,6 @@ export function TournamentGraph({
           >
             <path d="M0,0 L10,5 L0,10 z" className="fill-lose" />
           </marker>
-          <marker
-            id="arrow-decide"
-            viewBox="0 0 10 10"
-            refX="8"
-            refY="5"
-            markerWidth="8"
-            markerHeight="8"
-            orient="auto-start-reverse"
-          >
-            <path d="M0,0 L10,5 L0,10 z" className="fill-accent" />
-          </marker>
           <filter id="soft" x="-40%" y="-40%" width="180%" height="180%">
             <feDropShadow
               dx="0"
@@ -155,6 +144,12 @@ export function TournamentGraph({
               decidingEdge !== null &&
               ((decidingEdge.a === from && decidingEdge.b === to) ||
                 (decidingEdge.a === to && decidingEdge.b === from));
+            const decidingClass =
+              isDeciding && outcome !== "tie"
+                ? outcome === "you"
+                  ? "text-win stroke-win"
+                  : "text-lose stroke-lose"
+                : null;
 
             // Hover hint: highlight edges touching the hovered node.
             let state: "win" | "lose" | "idle" = "idle";
@@ -176,7 +171,9 @@ export function TournamentGraph({
                 strokeWidth={isDeciding ? 5 : state !== "idle" ? 3.5 : 2.5}
                 markerEnd={
                   isDeciding
-                    ? "url(#arrow-decide)"
+                    ? outcome === "you"
+                      ? "url(#arrow-win)"
+                      : "url(#arrow-lose)"
                     : state === "win"
                       ? "url(#arrow-win)"
                       : state === "lose"
@@ -185,8 +182,8 @@ export function TournamentGraph({
                 }
                 className={cn(
                   "transition-all duration-300",
-                  isDeciding
-                    ? "stroke-accent"
+                  decidingClass
+                    ? decidingClass
                     : state === "win"
                       ? "stroke-win"
                       : state === "lose"
@@ -208,6 +205,12 @@ export function TournamentGraph({
             revealing &&
             outcome !== "tie" &&
             ((outcome === "you" && isYou) || (outcome === "opp" && isOpp));
+          const winnerRingClass =
+            isWinner && outcome === "you"
+              ? "stroke-win"
+              : isWinner && outcome === "opp"
+                ? "stroke-lose"
+                : "stroke-accent";
 
           return (
             <g
@@ -240,7 +243,7 @@ export function TournamentGraph({
                   cx={p.x}
                   cy={p.y}
                   r={NODE_R + 9}
-                  className="fill-none stroke-accent"
+                  className={cn("fill-none", winnerRingClass)}
                   strokeWidth={4}
                 >
                   <animate
@@ -259,11 +262,11 @@ export function TournamentGraph({
                 className={cn(
                   "transition-colors duration-200",
                   isYou
-                    ? "fill-win stroke-win"
+                    ? "fill-you stroke-you"
                     : isOpp
-                      ? "fill-lose stroke-lose"
+                      ? "fill-opponent stroke-opponent"
                       : isHover
-                        ? "fill-secondary stroke-primary"
+                        ? "fill-you/15 stroke-you"
                         : "fill-card stroke-border",
                 )}
                 strokeWidth={isYou || isOpp ? 4 : 3}
@@ -274,7 +277,7 @@ export function TournamentGraph({
                 textAnchor="middle"
                 dominantBaseline="central"
                 className={cn(
-                  "pointer-events-none font-heading text-[24px] font-bold",
+                  "pointer-events-none font-heading text-[32px] font-bold",
                   isYou || isOpp ? "fill-card" : "fill-foreground",
                 )}
               >

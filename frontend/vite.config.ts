@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 const here = dirname(fileURLToPath(import.meta.url));
+const backend = process.env.RPS_BACKEND_URL ?? "http://127.0.0.1:3000";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
@@ -17,9 +18,10 @@ export default defineConfig({
   server: {
     host: true,
     proxy: {
-      // Dev: Vite on :5173 proxies the WebSocket to the Bun server on :3000.
-      "/ws": { target: "http://127.0.0.1:3000", ws: true, changeOrigin: true },
-      "/health": { target: "http://127.0.0.1:3000", changeOrigin: true },
+      // Dev: Vite proxies the WebSocket to the Bun server.
+      // Override RPS_BACKEND_URL when :3000 is already occupied by another app.
+      "/ws": { target: backend, ws: true, changeOrigin: true },
+      "/health": { target: backend, changeOrigin: true },
     },
   },
 });

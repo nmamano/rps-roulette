@@ -303,6 +303,7 @@ export class Room {
         youPicked: false,
         bothPicked: false,
         deadline: null,
+        roundTimerMs: null,
         winner: null,
       };
     }

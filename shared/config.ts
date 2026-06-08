@@ -3,7 +3,7 @@
 // pools — live in tournament.ts.) Browser-safe: types/constants only.
 
 // How long the reveal lingers before the server starts the next round.
-export const REVEAL_MS = 2500;
+export const REVEAL_MS = 4500;
 
 // How long a room is kept alive after a player drops, so they can rejoin by code.
 export const RECONNECT_GRACE_MS = 30000;

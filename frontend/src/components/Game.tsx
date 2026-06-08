@@ -166,33 +166,34 @@ export function Game({
         </div>
       </div>
 
-      {/* Timer */}
-      {phase === "picking" && (
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-muted-foreground">
-              {locked ? "Pick locked" : "Time to pick"}
-            </span>
-            <span
-              className={cn(
-                "font-heading font-extrabold tabular-nums",
-                urgent ? "text-lose" : "text-foreground",
-              )}
-            >
-              {seconds}s
-            </span>
-          </div>
-          <div className="mt-1.5 h-3 w-full overflow-hidden rounded-full bg-secondary">
-            <div
-              className={cn(
-                "h-full rounded-full transition-all duration-100 ease-linear",
-                urgent ? "bg-lose" : "bg-primary",
-              )}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+      {/* Timer: kept mounted but hidden off-picking so the graph never shifts up. */}
+      <div
+        className={cn("mt-4", phase !== "picking" && "invisible")}
+        aria-hidden={phase !== "picking"}
+      >
+        <div className="flex items-center justify-between text-sm">
+          <span className="font-semibold text-muted-foreground">
+            {locked ? "Pick locked" : "Time to pick"}
+          </span>
+          <span
+            className={cn(
+              "font-heading font-extrabold tabular-nums",
+              urgent ? "text-lose" : "text-foreground",
+            )}
+          >
+            {seconds}s
+          </span>
         </div>
-      )}
+        <div className="mt-1.5 h-3 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-100 ease-linear",
+              urgent ? "bg-lose" : "bg-primary",
+            )}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </div>
 
       {/* Graph */}
       <div className="flex flex-col items-center py-2 sm:flex-1 sm:justify-center sm:py-6">

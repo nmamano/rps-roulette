@@ -349,9 +349,7 @@ export function TournamentGraph({
               <span className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground">
                 {labels[preview]} beats {degrees[preview]}/{n - 1}
               </span>
-            ) : (
-              <span>Tap a move to preview it</span>
-            )}
+            ) : null}
           </div>
         </div>
       )}

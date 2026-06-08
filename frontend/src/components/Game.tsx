@@ -195,7 +195,7 @@ export function Game({
       )}
 
       {/* Graph */}
-      <div className="flex flex-1 flex-col items-center justify-center py-6">
+      <div className="flex flex-1 flex-col items-center justify-center py-2 sm:py-6">
         {tournament && (
           <TournamentGraph
             tournament={tournament}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Tournament } from "@shared/tournament";
 import { outDegrees } from "@shared/tournament";
 import { cn } from "@/lib/cn";
@@ -32,7 +32,8 @@ export function TournamentGraph({
   // first tap on touch (which has no hover). On touch, a second tap on the same
   // staged node commits the pick. See the node handlers below.
   const [staged, setStaged] = useState<number | null>(null);
-  const pointerType = useRef<string>("mouse");
+  // Touch devices (coarse primary pointer) have no hover, so picks are two-step:
+  // first tap previews, second tap commits. Fine pointers commit on one click.
   const isCoarse = useMemo(
     () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
     [],
@@ -229,12 +230,9 @@ export function TournamentGraph({
           return (
             <g
               key={i}
-              onPointerDown={(e) => {
-                pointerType.current = e.pointerType;
-              }}
               onPointerEnter={(e) => {
-                // Mouse hover previews. Touch fires this too, but we let the tap
-                // handler manage staging so it does not commit on first contact.
+                // Mouse hover previews. Touch fires this too, but staging is
+                // driven by the tap handler so it does not commit on contact.
                 if (interactive && e.pointerType === "mouse") setStaged(i);
               }}
               onPointerLeave={(e) => {
@@ -242,10 +240,10 @@ export function TournamentGraph({
               }}
               onClick={() => {
                 if (!interactive) return;
-                // Mouse/keyboard commit on a single activation (hover/focus has
-                // already previewed). Touch has no hover, so the first tap stages
-                // a preview and a second tap on the same node commits.
-                if (pointerType.current === "mouse" || staged === i) onPick(i);
+                // Fine pointer (mouse): hover already previewed, so commit on
+                // click. Coarse pointer (touch): first tap stages a preview, a
+                // second tap on the same node commits.
+                if (!isCoarse || staged === i) onPick(i);
                 else setStaged(i);
               }}
               onFocus={() => interactive && setStaged(i)}

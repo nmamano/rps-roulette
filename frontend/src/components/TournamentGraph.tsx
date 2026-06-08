@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Tournament } from "@shared/tournament";
 import { outDegrees } from "@shared/tournament";
 import { cn } from "@/lib/cn";
@@ -28,8 +28,22 @@ export function TournamentGraph({
   outcome,
   interactive,
 }: Props) {
-  const [hover, setHover] = useState<number | null>(null);
+  // `staged` is the previewed node: set by mouse hover / keyboard focus, or by a
+  // first tap on touch (which has no hover). On touch, a second tap on the same
+  // staged node commits the pick. See the node handlers below.
+  const [staged, setStaged] = useState<number | null>(null);
+  const pointerType = useRef<string>("mouse");
+  const isCoarse = useMemo(
+    () => typeof window !== "undefined" && !!window.matchMedia?.("(pointer: coarse)").matches,
+    [],
+  );
   const { n, labels, beats } = tournament;
+
+  // Clear any stale preview when a fresh picking round begins, so a node left
+  // staged on touch (where no pointerleave fires) does not look pre-selected.
+  useEffect(() => {
+    if (interactive) setStaged(null);
+  }, [interactive]);
 
   const points = useMemo(() => {
     return Array.from({ length: n }, (_, i) => {
@@ -55,7 +69,7 @@ export function TournamentGraph({
         viewBox={`0 0 ${SIZE} ${SIZE}`}
         className="h-auto w-full max-w-[460px] touch-none overflow-visible select-none"
         role="img"
-        aria-label="Tournament graph. Hover a node to see what it beats."
+        aria-label="Tournament graph. Hover or tap a node to see what it beats."
       >
         <defs>
           <marker
@@ -151,16 +165,16 @@ export function TournamentGraph({
                   : "text-lose stroke-lose"
                 : null;
 
-            // Hover hint: highlight edges touching the hovered node.
+            // Preview hint: highlight edges touching the staged node.
             let state: "win" | "lose" | "idle" = "idle";
-            if (hover !== null && !revealing) {
-              if (from === hover) state = "win";
-              else if (to === hover) state = "lose";
+            if (staged !== null && !revealing) {
+              if (from === staged) state = "win";
+              else if (to === staged) state = "lose";
             }
 
             // Edges not connected to focus stay clearly visible (lighter, not invisible).
             const faded =
-              (hover !== null && state === "idle" && !revealing) || (revealing && !isDeciding);
+              (staged !== null && state === "idle" && !revealing) || (revealing && !isDeciding);
 
             return (
               <path
@@ -200,7 +214,7 @@ export function TournamentGraph({
         {points.map((p, i) => {
           const isYou = yourPick === i;
           const isOpp = oppPick === i && revealing;
-          const isHover = hover === i;
+          const isStaged = staged === i;
           const isWinner =
             revealing &&
             outcome !== "tie" &&
@@ -215,11 +229,27 @@ export function TournamentGraph({
           return (
             <g
               key={i}
-              onMouseEnter={() => interactive && setHover(i)}
-              onMouseLeave={() => setHover(null)}
-              onClick={() => interactive && onPick(i)}
-              onFocus={() => interactive && setHover(i)}
-              onBlur={() => setHover(null)}
+              onPointerDown={(e) => {
+                pointerType.current = e.pointerType;
+              }}
+              onPointerEnter={(e) => {
+                // Mouse hover previews. Touch fires this too, but we let the tap
+                // handler manage staging so it does not commit on first contact.
+                if (interactive && e.pointerType === "mouse") setStaged(i);
+              }}
+              onPointerLeave={(e) => {
+                if (e.pointerType === "mouse") setStaged(null);
+              }}
+              onClick={() => {
+                if (!interactive) return;
+                // Mouse/keyboard commit on a single activation (hover/focus has
+                // already previewed). Touch has no hover, so the first tap stages
+                // a preview and a second tap on the same node commits.
+                if (pointerType.current === "mouse" || staged === i) onPick(i);
+                else setStaged(i);
+              }}
+              onFocus={() => interactive && setStaged(i)}
+              onBlur={() => setStaged(null)}
               role={interactive ? "button" : undefined}
               tabIndex={interactive ? 0 : undefined}
               aria-label={
@@ -233,7 +263,7 @@ export function TournamentGraph({
               }}
               className={cn("origin-center transition-transform", interactive && "cursor-pointer")}
               style={{
-                transform: isHover || isYou || isOpp ? "scale(1.08)" : undefined,
+                transform: isStaged || isYou || isOpp ? "scale(1.08)" : undefined,
                 transformBox: "fill-box",
                 transformOrigin: "center",
               }}
@@ -265,7 +295,7 @@ export function TournamentGraph({
                     ? "fill-you stroke-you"
                     : isOpp
                       ? "fill-opponent stroke-opponent"
-                      : isHover
+                      : isStaged
                         ? "fill-you/15 stroke-you"
                         : "fill-card stroke-border",
                 )}
@@ -304,9 +334,13 @@ export function TournamentGraph({
           <div className="flex h-7 items-center">
             <span
               className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground"
-              style={{ visibility: hover !== null ? "visible" : "hidden" }}
+              style={{ visibility: staged !== null ? "visible" : "hidden" }}
             >
-              {hover !== null ? `${labels[hover]} beats ${degrees[hover]}/${n - 1}` : " "}
+              {staged !== null
+                ? `${labels[staged]} beats ${degrees[staged]}/${n - 1}${
+                    isCoarse ? " · tap to lock" : ""
+                  }`
+                : " "}
             </span>
           </div>
         </div>

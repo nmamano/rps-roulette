@@ -5,10 +5,10 @@ import { cn } from "@/lib/cn";
 
 interface Props {
   tournament: Tournament;
-  onPick: (node: number) => void;
+  selected: number | null;
+  onSelect: (node: number) => void;
   yourPick: number | null;
   oppPick: number | null;
-  locked: boolean;
   revealing: boolean;
   outcome: "you" | "opp" | "tie" | null;
   interactive: boolean;
@@ -21,7 +21,8 @@ const NODE_R = 32;
 
 export function TournamentGraph({
   tournament,
-  onPick,
+  selected,
+  onSelect,
   yourPick,
   oppPick,
   revealing,
@@ -29,21 +30,17 @@ export function TournamentGraph({
   interactive,
 }: Props) {
   // Two-step pick, robust across devices: clicking/tapping a node only SELECTS
-  // it (never commits); committing is a separate "Lock in" button. A node tap
+  // it (never commits); committing is the parent's "Lock in" button. A node tap
   // can never commit, even if a platform fires synthetic mouse events on touch.
-  // `hovered` is a transient desktop hover; `selected` is the chosen node.
+  // `selected` is owned by the parent; `hovered` is a transient desktop hover.
   const [hovered, setHovered] = useState<number | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
   const preview = hovered ?? selected;
   const { n, labels, beats } = tournament;
 
-  // Clear selection/hover when a fresh picking round begins so nothing looks
-  // pre-selected (notably on touch, where no pointerleave fires).
+  // Drop any hover when picking ends so a stale highlight does not linger over
+  // the reveal. (Selection is cleared by the parent on a fresh round.)
   useEffect(() => {
-    if (interactive) {
-      setSelected(null);
-      setHovered(null);
-    }
+    if (!interactive) setHovered(null);
   }, [interactive]);
 
   const points = useMemo(() => {
@@ -238,9 +235,10 @@ export function TournamentGraph({
                 if (e.pointerType === "mouse") setHovered(null);
               }}
               onClick={() => {
-                // Clicking/tapping only SELECTS. Commit is the Lock-in button, so
-                // a node tap can never commit (immune to synthetic/double events).
-                if (interactive) setSelected(i);
+                // Clicking/tapping only SELECTS. Commit is the parent's Lock-in
+                // button, so a node tap can never commit (immune to synthetic or
+                // double events some mobile browsers fire on tap).
+                if (interactive) onSelect(i);
               }}
               onFocus={() => interactive && setHovered(i)}
               onBlur={() => setHovered(null)}
@@ -254,7 +252,7 @@ export function TournamentGraph({
               onKeyDown={(e) => {
                 if (interactive && (e.key === "Enter" || e.key === " ")) {
                   e.preventDefault();
-                  setSelected(i);
+                  onSelect(i);
                 }
               }}
               className={cn("origin-center transition-transform", interactive && "cursor-pointer")}
@@ -324,33 +322,16 @@ export function TournamentGraph({
         })}
       </svg>
 
-      {/* Color legend + action row. The action row has a reserved height so the
-          graph above never shifts when its contents change. */}
+      {/* Edge color legend (the picking instruction / lock-in live in the
+          parent's status line so there is a single action in one place). */}
       {interactive && (
-        <div className="mt-3 flex flex-col items-center gap-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-x-5">
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-5 rounded-full bg-win" /> beats
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-2.5 w-5 rounded-full bg-lose" /> loses to
-            </span>
-          </div>
-          <div className="flex h-10 items-center">
-            {selected !== null ? (
-              <button
-                type="button"
-                onClick={() => onPick(selected)}
-                className="rounded-full bg-primary px-6 py-2 font-heading font-bold text-primary-foreground shadow-[0_4px_0_0_var(--border)] transition-transform active:translate-y-px"
-              >
-                Lock in {labels[selected]} (beats {degrees[selected]}/{n - 1})
-              </button>
-            ) : preview !== null ? (
-              <span className="rounded-full bg-secondary px-3 py-0.5 font-heading font-bold text-secondary-foreground">
-                {labels[preview]} beats {degrees[preview]}/{n - 1}
-              </span>
-            ) : null}
-          </div>
+        <div className="mt-3 flex items-center justify-center gap-x-5 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-5 rounded-full bg-win" /> beats
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-5 rounded-full bg-lose" /> loses to
+          </span>
         </div>
       )}
     </div>

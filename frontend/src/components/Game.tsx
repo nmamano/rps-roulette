@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/Button";
 import { TournamentGraph } from "@/components/TournamentGraph";
-import { ROUND_TIMER_MS, WINS_TO_WIN, type RoundOutcome } from "@shared/tournament";
+import { ROUND_TIMER_MS, WINS_TO_WIN, outDegrees, type RoundOutcome } from "@shared/tournament";
 import type { PlayerId, RoomSnapshot, Score } from "@shared/protocol";
 import { cn } from "@/lib/cn";
 
@@ -92,6 +92,14 @@ export function Game({
           : "opp"
       : null;
   const iWon = winner === me;
+
+  // The pending (selected-but-not-committed) pick. Committed via the status
+  // line's Lock-in button below; cleared when a fresh picking round starts.
+  const [selected, setSelected] = useState<number | null>(null);
+  useEffect(() => {
+    if (interactive) setSelected(null);
+  }, [interactive]);
+  const degrees = useMemo(() => (tournament ? outDegrees(tournament) : null), [tournament]);
 
   let status = "Pick a node";
   if (phase === "picking" && locked) status = "Locked in! Waiting on your opponent…";
@@ -200,10 +208,10 @@ export function Game({
         {tournament && (
           <TournamentGraph
             tournament={tournament}
-            onPick={onPick}
+            selected={selected}
+            onSelect={setSelected}
             yourPick={yourPick}
             oppPick={oppPick}
-            locked={locked}
             revealing={revealing}
             outcome={myOutcome}
             interactive={interactive}
@@ -249,6 +257,14 @@ export function Game({
               </Button>
             </div>
           </div>
+        ) : interactive && selected !== null && tournament && degrees ? (
+          <button
+            type="button"
+            onClick={() => onPick(selected)}
+            className="rounded-full bg-primary px-6 py-2 font-heading text-lg font-bold text-primary-foreground shadow-[0_4px_0_0_var(--border)] transition-transform active:translate-y-px"
+          >
+            Lock in {tournament.labels[selected]} (beats {degrees[selected]}/{tournament.n - 1})
+          </button>
         ) : (
           <p className="font-heading text-lg font-bold">{status}</p>
         )}
